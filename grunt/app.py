@@ -23,6 +23,7 @@ from .widgets.item_list import ItemList
 TODO_SORTS = ["priority", "due date", "created"]
 MEMO_SORTS = ["created", "updated"]
 PRIORITY_ORDER = {"high": 0, "medium": 1, "low": 2}
+THEMES = ["textual-dark", "textual-light", "nord", "gruvbox", "catppuccin-mocha", "dracula", "tokyo-night", "solarized-light"]
 
 
 def _sort_todos(todos: list[Todo], sort_by: str) -> list[Todo]:
@@ -89,6 +90,7 @@ class GruntApp(App):
         Binding("s", "cycle_sort", "Sort", priority=True),
         Binding("tab", "next_tab", "Next tab", show=False),
         Binding("shift+tab", "prev_tab", "Prev tab", show=False),
+        Binding("T", "cycle_theme", "Theme", priority=True),
         Binding("q", "quit", "Quit"),
     ]
 
@@ -100,6 +102,7 @@ class GruntApp(App):
         self._show_archive = False
         self._todo_sort = "priority"
         self._memo_sort = "created"
+        self._theme_index = 0
 
     def compose(self) -> ComposeResult:
         """Build the top-level widget tree with a tabbed layout for todos and memos."""
@@ -233,6 +236,11 @@ class GruntApp(App):
     def action_prev_tab(self) -> None:
         """Switch to the previous tab."""
         self.action_next_tab()
+
+    def action_cycle_theme(self) -> None:
+        """Cycle to the next available Textual theme."""
+        self._theme_index = (self._theme_index + 1) % len(THEMES)
+        self.theme = THEMES[self._theme_index]
 
     def action_quit(self) -> None:
         """Kick off a background git push then exit the app."""

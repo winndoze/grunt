@@ -15,27 +15,36 @@ class EditMemoScreen(Screen[Memo | None]):
 
     CSS = """
     EditMemoScreen {
-        padding: 1 4;
+        padding: 0 2;
     }
     #edit-box {
         height: 1fr;
     }
     #edit-box Label {
-        margin-top: 1;
+        height: 1;
+        margin: 0;
+        padding: 0;
     }
     #edit-box Input {
-        margin-bottom: 1;
+        height: 1;
+        border: none;
+        padding: 0 1;
+        margin: 0 0 1 0;
     }
     #body-area {
         height: 1fr;
-        margin-bottom: 1;
+        margin: 0 0 1 0;
     }
     #btn-row {
-        height: auto;
-        margin-top: 1;
-        padding-bottom: 1;
+        height: 1;
+        margin: 0;
+        padding: 0;
     }
     #btn-row Button {
+        height: 1;
+        border: none;
+        padding: 0 2;
+        min-width: 10;
         margin-right: 1;
     }
     """
