@@ -1,3 +1,5 @@
+"""File-based storage layer for reading and writing grunt items as Markdown with frontmatter."""
+
 from __future__ import annotations
 
 from datetime import date
@@ -8,29 +10,34 @@ from .models import Item, Memo, Todo, unique_slug
 
 
 def _todo_path(data_dir: Path, slug: str, archived: bool) -> Path:
+    """Return the filesystem path for a todo file given its slug and archive status."""
     if archived:
         return data_dir / "archive" / "todo" / f"{slug}.md"
     return data_dir / "todo" / f"{slug}.md"
 
 
 def _memo_path(data_dir: Path, slug: str, archived: bool) -> Path:
+    """Return the filesystem path for a memo file given its slug and archive status."""
     if archived:
         return data_dir / "archive" / "memo" / f"{slug}.md"
     return data_dir / "memo" / f"{slug}.md"
 
 
 def item_path(data_dir: Path, item: Item) -> Path:
+    """Return the filesystem path for the given item."""
     if isinstance(item, Todo):
         return _todo_path(data_dir, item.slug, item.archived)
     return _memo_path(data_dir, item.slug, item.archived)
 
 
 def _ensure_dirs(data_dir: Path) -> None:
+    """Create all required subdirectories under data_dir if they do not already exist."""
     for d in ["todo", "memo", "archive/todo", "archive/memo"]:
         (data_dir / d).mkdir(parents=True, exist_ok=True)
 
 
 def _parse_todo(post: frontmatter.Post, slug: str, archived: bool) -> Todo:
+    """Construct a Todo dataclass from a parsed frontmatter Post object."""
     return Todo(
         title=post.get("title", slug),
         priority=post.get("priority", "medium"),
@@ -45,6 +52,7 @@ def _parse_todo(post: frontmatter.Post, slug: str, archived: bool) -> Todo:
 
 
 def _parse_memo(post: frontmatter.Post, slug: str, archived: bool) -> Memo:
+    """Construct a Memo dataclass from a parsed frontmatter Post object."""
     return Memo(
         title=post.get("title", slug),
         body=post.content,
@@ -56,6 +64,7 @@ def _parse_memo(post: frontmatter.Post, slug: str, archived: bool) -> Memo:
 
 
 def _read_item(path: Path, archived: bool) -> Item | None:
+    """Parse a Markdown file into an Item, returning None if the file is invalid."""
     try:
         post = frontmatter.load(str(path))
     except Exception:
@@ -70,6 +79,7 @@ def _read_item(path: Path, archived: bool) -> Item | None:
 
 
 def list_items(data_dir: Path, item_type: str, include_archived: bool = False) -> list[Item]:
+    """Return all items of the given type, optionally including archived ones."""
     _ensure_dirs(data_dir)
     items: list[Item] = []
     active_dir = data_dir / item_type
@@ -87,6 +97,7 @@ def list_items(data_dir: Path, item_type: str, include_archived: bool = False) -
 
 
 def _existing_slugs(data_dir: Path, item_type: str) -> set[str]:
+    """Collect all existing slugs for a given item type across active and archive directories."""
     slugs: set[str] = set()
     for d in [data_dir / item_type, data_dir / "archive" / item_type]:
         for p in d.glob("*.md"):
@@ -95,6 +106,7 @@ def _existing_slugs(data_dir: Path, item_type: str) -> set[str]:
 
 
 def write_item(data_dir: Path, item: Item, is_new: bool = False) -> Path:
+    """Serialize an item to its Markdown file, assigning a unique slug if it is new."""
     _ensure_dirs(data_dir)
     if is_new:
         existing = _existing_slugs(data_dir, item.item_type)
@@ -143,6 +155,7 @@ def move_item(data_dir: Path, item: Item) -> tuple[Path, Path]:
 
 
 def delete_item(data_dir: Path, item: Item) -> Path:
+    """Delete the file associated with the given item and return its path."""
     path = item_path(data_dir, item)
     path.unlink(missing_ok=True)
     return path

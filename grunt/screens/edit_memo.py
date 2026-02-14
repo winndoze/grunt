@@ -1,3 +1,5 @@
+"""Screen for creating and editing grunt memo items."""
+
 from __future__ import annotations
 
 from textual.app import ComposeResult
@@ -44,14 +46,17 @@ class EditMemoScreen(Screen[Memo | None]):
     ]
 
     def __init__(self, memo: Memo | None = None) -> None:
+        """Prepare the screen for creating a new memo or editing an existing one."""
         super().__init__()
         self._memo = memo
         self._is_new = memo is None
 
     def on_mount(self) -> None:
+        """Focus the title input field when the screen is first displayed."""
         self.set_focus(self.query_one("#title-input", Input))
 
     def compose(self) -> ComposeResult:
+        """Build the edit form with fields for title and body."""
         memo = self._memo
         with VerticalScroll(id="edit-box"):
             yield Label("New Memo" if self._is_new else f"Edit: {memo.title}")
@@ -75,6 +80,7 @@ class EditMemoScreen(Screen[Memo | None]):
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Dispatch button presses to the appropriate save, cancel, or archive action."""
         if event.button.id == "save-btn":
             self.action_save()
         elif event.button.id == "cancel-btn":
@@ -83,6 +89,7 @@ class EditMemoScreen(Screen[Memo | None]):
             self.dismiss("archive")
 
     def action_save(self) -> None:
+        """Validate form fields and dismiss the screen with the updated or new Memo."""
         title = self.query_one("#title-input", Input).value.strip()
         if not title:
             return
@@ -101,4 +108,5 @@ class EditMemoScreen(Screen[Memo | None]):
             ))
 
     def action_cancel(self) -> None:
+        """Dismiss the screen without saving any changes."""
         self.dismiss(None)

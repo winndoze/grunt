@@ -1,3 +1,5 @@
+"""Entry point for grunt that handles first-run setup and launches the TUI application."""
+
 from __future__ import annotations
 
 import asyncio
@@ -16,9 +18,11 @@ def _bootstrap_setup() -> str | None:
 
     class BootstrapApp(App):
         def on_mount(self) -> None:
+            """Push the setup screen immediately on startup."""
             self.push_screen(SetupScreen(), self._on_setup_done)
 
         def _on_setup_done(self, data_dir: str | None) -> None:
+            """Store the chosen directory and exit the bootstrap app."""
             if data_dir:
                 chosen.append(data_dir)
             self.exit()
@@ -28,6 +32,7 @@ def _bootstrap_setup() -> str | None:
 
 
 def main() -> None:
+    """Load or create configuration, initialise git, and start the grunt TUI."""
     config = load_config()
 
     if config is None:

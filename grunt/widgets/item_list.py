@@ -1,3 +1,5 @@
+"""Custom Textual widgets for rendering and selecting grunt items in a list."""
+
 from __future__ import annotations
 
 from textual.app import ComposeResult
@@ -8,10 +10,12 @@ from ..models import Item, Todo, Memo
 
 class ItemRow(ListItem):
     def __init__(self, item: Item) -> None:
+        """Store the item this row represents."""
         super().__init__()
         self.item = item
 
     def compose(self) -> ComposeResult:
+        """Render the item's fields as a formatted Label."""
         item = self.item
         if isinstance(item, Todo):
             arc_str  = "▸arc  " if item.archived else "      "
@@ -42,12 +46,14 @@ class ItemList(ListView):
     """A ListView subclass that holds a list of grunt Items."""
 
     def load_items(self, items: list[Item]) -> None:
+        """Replace the current list contents with the provided items."""
         self.clear()
         for item in items:
             self.append(ItemRow(item))
 
     @property
     def selected_item(self) -> Item | None:
+        """Return the Item associated with the currently highlighted row, or None."""
         if self.index is None:
             return None
         children = list(self.query(ItemRow))

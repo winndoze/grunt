@@ -1,3 +1,5 @@
+"""The main Textual TUI application class and supporting sort helpers for grunt."""
+
 from __future__ import annotations
 
 import asyncio
@@ -24,6 +26,7 @@ PRIORITY_ORDER = {"high": 0, "medium": 1, "low": 2}
 
 
 def _sort_todos(todos: list[Todo], sort_by: str) -> list[Todo]:
+    """Return todos sorted by the given field name."""
     if sort_by == "due date":
         return sorted(todos, key=lambda t: (
             t.due or "9999-99-99",
@@ -39,6 +42,7 @@ def _sort_todos(todos: list[Todo], sort_by: str) -> list[Todo]:
 
 
 def _sort_memos(memos: list[Memo], sort_by: str) -> list[Memo]:
+    """Return memos sorted by the given field name."""
     if sort_by == "updated":
         return sorted(memos, key=lambda m: m.updated or m.created, reverse=True)
     else:  # created
@@ -89,6 +93,7 @@ class GruntApp(App):
     ]
 
     def __init__(self, data_dir: Path, config: dict) -> None:
+        """Initialise the app with the resolved data directory and loaded config."""
         super().__init__()
         self.data_dir = data_dir
         self.config = config
@@ -97,6 +102,7 @@ class GruntApp(App):
         self._memo_sort = "created"
 
     def compose(self) -> ComposeResult:
+        """Build the top-level widget tree with a tabbed layout for todos and memos."""
         yield Header()
         with TabbedContent(id="tabs"):
             with TabPane("TODOs", id="tab-todos"):
@@ -108,13 +114,16 @@ class GruntApp(App):
         yield Footer()
 
     def on_mount(self) -> None:
+        """Populate item lists and focus the todo list on startup."""
         self._refresh_lists()
         self.set_focus(self.query_one("#todo-list", ItemList))
 
     def on_tabbed_content_tab_activated(self, event: TabbedContent.TabActivated) -> None:
+        """Move focus to the item list of the newly activated tab."""
         self.set_focus(self._active_list())
 
     def _refresh_lists(self) -> None:
+        """Reload and re-sort both item lists from disk, then update the UI."""
         todos = _sort_todos(
             list_items(self.data_dir, "todo", self._show_archive),
             self._todo_sort,
@@ -130,6 +139,7 @@ class GruntApp(App):
         self.title = f"grunt{status}"
 
     def _update_sort_label(self) -> None:
+        """Refresh the sort/archive hint labels above both item lists."""
         item = self._active_list().selected_item
         archive_action = "unarchive" if (item and item.archived) else "archive"
         archive_hint = "  [A: hide archive]" if self._show_archive else "  [A: show archive]"
@@ -141,6 +151,7 @@ class GruntApp(App):
         )
 
     def _active_list(self) -> ItemList:
+        """Return the ItemList widget belonging to the currently active tab."""
         tabs = self.query_one("#tabs", TabbedContent)
         active = tabs.active
         if active == "tab-todos":
@@ -148,22 +159,27 @@ class GruntApp(App):
         return self.query_one("#memo-list", ItemList)
 
     def _is_todo_tab(self) -> bool:
+        """Return True if the todos tab is currently active."""
         tabs = self.query_one("#tabs", TabbedContent)
         return tabs.active == "tab-todos"
 
     def action_new_item(self) -> None:
+        """Open the appropriate edit screen to create a new todo or memo."""
         if self._is_todo_tab():
             self.push_screen(EditTodoScreen(), self._on_todo_saved)
         else:
             self.push_screen(EditMemoScreen(), self._on_memo_saved)
 
     def on_list_view_selected(self, event: ItemList.Selected) -> None:
+        """Open the edit screen for the item that was activated by selection."""
         self.action_edit_item()
 
     def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
+        """Update the sort label whenever the highlighted item changes."""
         self._update_sort_label()
 
     def action_edit_item(self) -> None:
+        """Open the edit screen for the currently highlighted item."""
         item = self._active_list().selected_item
         if item is None:
             return
@@ -173,6 +189,7 @@ class GruntApp(App):
             self.push_screen(EditMemoScreen(item), self._on_memo_saved)
 
     def action_toggle_done(self) -> None:
+        """Toggle the done state of the highlighted todo and persist the change."""
         from datetime import datetime
         item = self._active_list().selected_item
         if not isinstance(item, Todo):
@@ -186,16 +203,19 @@ class GruntApp(App):
         self._refresh_lists()
 
     def action_archive_item(self) -> None:
+        """Archive or unarchive the currently highlighted item."""
         item = self._active_list().selected_item
         if item is None:
             return
         self._do_archive(item)
 
     def action_toggle_archive(self) -> None:
+        """Toggle visibility of archived items in both lists."""
         self._show_archive = not self._show_archive
         self._refresh_lists()
 
     def action_cycle_sort(self) -> None:
+        """Advance to the next sort mode for the active tab and refresh."""
         if self._is_todo_tab():
             idx = TODO_SORTS.index(self._todo_sort)
             self._todo_sort = TODO_SORTS[(idx + 1) % len(TODO_SORTS)]
@@ -206,15 +226,18 @@ class GruntApp(App):
 
 
     def action_next_tab(self) -> None:
+        """Switch to the next tab."""
         tabs = self.query_one("#tabs", TabbedContent)
         tabs.active = "tab-memos" if tabs.active == "tab-todos" else "tab-todos"
 
     def action_prev_tab(self) -> None:
+        """Switch to the previous tab."""
         self.action_next_tab()
 
     # --- Callbacks ---
 
     def _on_todo_saved(self, result: Todo | str | None) -> None:
+        """Handle the result from the EditTodoScreen, persisting or archiving as needed."""
         if result is None:
             return
         if result == "archive":
@@ -235,6 +258,7 @@ class GruntApp(App):
         self._refresh_lists()
 
     def _on_memo_saved(self, result: Memo | str | None) -> None:
+        """Handle the result from the EditMemoScreen, persisting or archiving as needed."""
         if result is None:
             return
         if result == "archive":
@@ -255,6 +279,7 @@ class GruntApp(App):
         self._refresh_lists()
 
     def _do_archive(self, item: Item) -> None:
+        """Move the item to or from the archive directory and commit the change."""
         action_verb = "Unarchive" if item.archived else "Archive"
         src, dst = move_item(self.data_dir, item)
         asyncio.ensure_future(
@@ -266,4 +291,3 @@ class GruntApp(App):
             )
         )
         self._refresh_lists()
-

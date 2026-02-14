@@ -1,3 +1,5 @@
+"""Screen for creating and editing grunt todo items."""
+
 from __future__ import annotations
 
 from textual.app import ComposeResult
@@ -47,14 +49,17 @@ class EditTodoScreen(Screen[Todo | None]):
     ]
 
     def __init__(self, todo: Todo | None = None) -> None:
+        """Prepare the screen for creating a new todo or editing an existing one."""
         super().__init__()
         self._todo = todo
         self._is_new = todo is None
 
     def on_mount(self) -> None:
+        """Focus the title input field when the screen is first displayed."""
         self.set_focus(self.query_one("#title-input", Input))
 
     def compose(self) -> ComposeResult:
+        """Build the edit form with fields for title, priority, due date, done status, and description."""
         todo = self._todo
         with VerticalScroll(id="edit-box"):
             yield Label("New TODO" if self._is_new else f"Edit: {todo.title}")
@@ -93,6 +98,7 @@ class EditTodoScreen(Screen[Todo | None]):
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Dispatch button presses to the appropriate save, cancel, or archive action."""
         if event.button.id == "save-btn":
             self.action_save()
         elif event.button.id == "cancel-btn":
@@ -101,6 +107,7 @@ class EditTodoScreen(Screen[Todo | None]):
             self.dismiss("archive")
 
     def action_save(self) -> None:
+        """Validate form fields and dismiss the screen with the updated or new Todo."""
         title = self.query_one("#title-input", Input).value.strip()
         if not title:
             return
@@ -129,4 +136,5 @@ class EditTodoScreen(Screen[Todo | None]):
             ))
 
     def action_cancel(self) -> None:
+        """Dismiss the screen without saving any changes."""
         self.dismiss(None)
