@@ -45,11 +45,16 @@ class ItemRow(ListItem):
 class ItemList(ListView):
     """A ListView subclass that holds a list of grunt Items."""
 
-    def load_items(self, items: list[Item]) -> None:
-        """Replace the current list contents with the provided items."""
+    def load_items(self, items: list[Item], preserve_slug: str | None = None) -> None:
+        """Replace the current list contents with the provided items, restoring cursor by slug."""
         self.clear()
         for item in items:
             self.append(ItemRow(item))
+        if preserve_slug is not None:
+            for i, item in enumerate(items):
+                if item.slug == preserve_slug:
+                    self.index = i
+                    break
 
     @property
     def selected_item(self) -> Item | None:

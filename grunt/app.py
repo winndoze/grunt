@@ -127,7 +127,7 @@ class GruntApp(App):
         """Move focus to the item list of the newly activated tab."""
         self.set_focus(self._active_list())
 
-    def _refresh_lists(self) -> None:
+    def _refresh_lists(self, preserve_slug: str | None = None) -> None:
         """Reload and re-sort both item lists from disk, then update the UI."""
         todos = _sort_todos(
             list_items(self.data_dir, "todo", self._show_archive),
@@ -137,8 +137,8 @@ class GruntApp(App):
             list_items(self.data_dir, "memo", self._show_archive),
             self._memo_sort,
         )
-        self.query_one("#todo-list", ItemList).load_items(todos)
-        self.query_one("#memo-list", ItemList).load_items(memos)
+        self.query_one("#todo-list", ItemList).load_items(todos, preserve_slug)
+        self.query_one("#memo-list", ItemList).load_items(memos, preserve_slug)
         self._update_sort_label()
         status = " [showing archive]" if self._show_archive else ""
         self.title = f"grunt{status}"
@@ -199,13 +199,14 @@ class GruntApp(App):
         item = self._active_list().selected_item
         if not isinstance(item, Todo):
             return
+        slug = item.slug
         item.done = not item.done
         item.done_at = datetime.now().isoformat(timespec="seconds") if item.done else None
         path = write_item(self.data_dir, item)
         asyncio.ensure_future(
             git_add_commit(self.data_dir, path, f"Update todo: {item.title}")
         )
-        self._refresh_lists()
+        self._refresh_lists(preserve_slug=slug)
 
     def action_archive_item(self) -> None:
         """Archive or unarchive the currently highlighted item."""
@@ -278,7 +279,7 @@ class GruntApp(App):
         asyncio.ensure_future(
             git_add_commit(self.data_dir, path, f"{verb} todo: {todo.title}")
         )
-        self._refresh_lists()
+        self._refresh_lists(preserve_slug=todo.slug)
 
     def _on_memo_saved(self, result: Memo | str | None) -> None:
         """Handle the result from the EditMemoScreen, persisting or archiving as needed."""
@@ -299,10 +300,11 @@ class GruntApp(App):
         asyncio.ensure_future(
             git_add_commit(self.data_dir, path, f"{verb} memo: {memo.title}")
         )
-        self._refresh_lists()
+        self._refresh_lists(preserve_slug=memo.slug)
 
     def _do_archive(self, item: Item) -> None:
         """Move the item to or from the archive directory and commit the change."""
+        slug = item.slug
         action_verb = "Unarchive" if item.archived else "Archive"
         src, dst = move_item(self.data_dir, item)
         asyncio.ensure_future(
@@ -313,4 +315,4 @@ class GruntApp(App):
                 f"{action_verb} {item.item_type}: {item.title}",
             )
         )
-        self._refresh_lists()
+        self._refresh_lists(preserve_slug=slug)
