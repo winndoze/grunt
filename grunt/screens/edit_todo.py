@@ -51,13 +51,6 @@ class EditTodoScreen(Screen[Todo | None]):
         padding: 0 1;
         margin: 0;
     }
-    #due-row Button {
-        width: auto;
-        height: 1;
-        border: none;
-        padding: 0 1;
-        min-width: 5;
-    }
     #btn-row {
         height: 1;
         margin: 0;
@@ -82,6 +75,7 @@ class EditTodoScreen(Screen[Todo | None]):
         super().__init__()
         self._todo = todo
         self._is_new = todo is None
+        self._calendar_just_closed = False
 
     def on_mount(self) -> None:
         """Focus the title input field when the screen is first displayed."""
@@ -110,10 +104,9 @@ class EditTodoScreen(Screen[Todo | None]):
             with Horizontal(id="due-row"):
                 yield Input(
                     value=todo.due or "" if todo else "",
-                    placeholder="YYYY-MM-DD",
+                    placeholder="YYYY-MM-DD (focus to open calendar)",
                     id="due-input",
                 )
-                yield Button("cal", id="cal-btn")
             yield Checkbox("Done", value=todo.done if todo else False, id="done-check")
             yield Label("Description")
             yield TextArea(
@@ -136,12 +129,19 @@ class EditTodoScreen(Screen[Todo | None]):
             self.action_cancel()
         elif event.button.id == "archive-btn":
             self.dismiss("archive")
-        elif event.button.id == "cal-btn":
+
+    def on_input_focus(self, event: Input.Focus) -> None:
+        """Open the calendar picker automatically when the due date field gains focus."""
+        if event.input.id == "due-input":
+            if self._calendar_just_closed:
+                self._calendar_just_closed = False
+                return
             current = self.query_one("#due-input", Input).value.strip()
             self.app.push_screen(DatePickerScreen(current or None), self._on_date_picked)
 
     def _on_date_picked(self, result: str | None) -> None:
         """Set the due date input to the date returned from the calendar picker."""
+        self._calendar_just_closed = True
         if result is not None:
             self.query_one("#due-input", Input).value = result
 

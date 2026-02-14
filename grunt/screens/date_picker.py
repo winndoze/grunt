@@ -44,23 +44,28 @@ class CalendarWidget(Static, can_focus=True):
                     parts.append(f"{d:2}")
             lines.append(" ".join(parts))
         lines.append("")
-        lines.append("  ←→ day   [ ] month   ↑↓ week")
+        lines.append("  ←/→ day   [/] month   ↑/↓ week")
         return "\n".join(lines)
 
     def on_key(self, event: Key) -> None:
         """Handle keyboard navigation of the calendar."""
-        event.stop()
         if event.key == "left":
+            event.stop()
             self._shift_day(-1)
         elif event.key == "right":
+            event.stop()
             self._shift_day(1)
         elif event.key == "up":
+            event.stop()
             self._shift_day(-7)
         elif event.key == "down":
+            event.stop()
             self._shift_day(7)
-        elif event.key == "[":
+        elif event.key in ("[", "left_square_bracket"):
+            event.stop()
             self._shift_month(-1)
-        elif event.key == "]":
+        elif event.key in ("]", "right_square_bracket"):
+            event.stop()
             self._shift_month(1)
 
     def _shift_day(self, delta: int) -> None:
