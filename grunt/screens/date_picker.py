@@ -44,7 +44,7 @@ class CalendarWidget(Static, can_focus=True):
                     parts.append(f"{d:2}")
             lines.append(" ".join(parts))
         lines.append("")
-        lines.append("  ←/→ day   [/] month   ↑/↓ week")
+        lines.append("  ←/→ day   \\[ \\] month   ↑/↓ week")
         return "\n".join(lines)
 
     def on_key(self, event: Key) -> None:
