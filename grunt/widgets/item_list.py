@@ -53,14 +53,18 @@ class ItemList(ListView):
             self.append(ItemRow(item))
         if not items:
             return
+
+        target = None
         if preserve_slug is not None:
             for i, item in enumerate(items):
                 if item.slug == preserve_slug:
-                    self.index = i
-                    return
-        # slug not found (item removed from view) — keep same row position
-        if old_index is not None:
-            self.index = min(old_index, len(items) - 1)
+                    target = i
+                    break
+        if target is None and old_index is not None:
+            target = min(old_index, len(items) - 1)
+
+        if target is not None:
+            self.call_after_refresh(lambda: setattr(self, "index", target))
 
     @property
     def selected_item(self) -> Item | None:
