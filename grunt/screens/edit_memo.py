@@ -48,6 +48,9 @@ class EditMemoScreen(Screen[Memo | None]):
         self._memo = memo
         self._is_new = memo is None
 
+    def on_mount(self) -> None:
+        self.set_focus(self.query_one("#title-input", Input))
+
     def compose(self) -> ComposeResult:
         memo = self._memo
         with VerticalScroll(id="edit-box"):

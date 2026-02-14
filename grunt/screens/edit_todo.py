@@ -51,6 +51,9 @@ class EditTodoScreen(Screen[Todo | None]):
         self._todo = todo
         self._is_new = todo is None
 
+    def on_mount(self) -> None:
+        self.set_focus(self.query_one("#title-input", Input))
+
     def compose(self) -> ComposeResult:
         todo = self._todo
         with VerticalScroll(id="edit-box"):
