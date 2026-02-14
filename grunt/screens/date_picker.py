@@ -10,7 +10,7 @@ from textual.binding import Binding
 from textual.events import Key
 from textual.reactive import reactive
 from textual.screen import ModalScreen
-from textual.widgets import Button, Footer, Label, Static
+from textual.widgets import Label, Static
 from textual.containers import Horizontal, Vertical
 
 
@@ -44,7 +44,7 @@ class CalendarWidget(Static, can_focus=True):
                     parts.append(f"{d:2}")
             lines.append(" ".join(parts))
         lines.append("")
-        lines.append("  ←/→ day   \\[ \\] month   ↑/↓ week")
+        lines.append("  arrows: day/week   ,/. : month")
         return "\n".join(lines)
 
     def on_key(self, event: Key) -> None:
@@ -61,19 +61,19 @@ class CalendarWidget(Static, can_focus=True):
         elif event.key == "down":
             event.stop()
             self._shift_day(7)
-        elif event.key in ("[", "left_square_bracket"):
+        elif event.key == "comma":
             event.stop()
             self._shift_month(-1)
-        elif event.key in ("]", "right_square_bracket"):
+        elif event.key == "full_stop":
             event.stop()
             self._shift_month(1)
 
     def _shift_day(self, delta: int) -> None:
         """Move the selected day by delta days, updating month/year as needed."""
         d = date(self.year, self.month, self.day) + timedelta(days=delta)
-        self.year = d.year
-        self.month = d.month
-        self.day = d.day
+        self.set_reactive(CalendarWidget.year, d.year)
+        self.set_reactive(CalendarWidget.month, d.month)
+        self.day = d.day  # final set triggers the single re-render
 
     def _shift_month(self, delta: int) -> None:
         """Move forward or backward by one month, clamping the day if needed."""
@@ -84,9 +84,10 @@ class CalendarWidget(Static, can_focus=True):
         elif month < 1:
             month, year = 12, year - 1
         max_day = calendar.monthrange(year, month)[1]
-        self.year = year
-        self.month = month
-        self.day = min(self.day, max_day)
+        new_day = min(self.day, max_day)
+        self.set_reactive(CalendarWidget.year, year)
+        self.set_reactive(CalendarWidget.month, month)
+        self.day = new_day  # final set triggers the single re-render
 
     @property
     def selected_date(self) -> date:
