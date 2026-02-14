@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from textual.app import ComposeResult
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Input, Label, Select, TextArea
+from textual.widgets import Button, Checkbox, Footer, Input, Label, Select, TextArea
 from textual.containers import Horizontal, VerticalScroll
 
 from ..models import Todo
@@ -78,6 +78,7 @@ class EditTodoScreen(Screen[Todo | None]):
                 placeholder="YYYY-MM-DD",
                 id="due-input",
             )
+            yield Checkbox("Done", value=todo.done if todo else False, id="done-check")
             yield Label("Description")
             yield TextArea(
                 text=todo.description if todo else "",
@@ -106,12 +107,14 @@ class EditTodoScreen(Screen[Todo | None]):
         priority_widget = self.query_one("#priority-select", Select)
         priority = str(priority_widget.value) if priority_widget.value else "medium"
         due = self.query_one("#due-input", Input).value.strip() or None
+        done = self.query_one("#done-check", Checkbox).value
         description = self.query_one("#description-area", TextArea).text
 
         if self._todo:
             self._todo.title = title
             self._todo.priority = priority
             self._todo.due = due
+            self._todo.done = done
             self._todo.description = description
             self.dismiss(self._todo)
         else:
@@ -120,6 +123,7 @@ class EditTodoScreen(Screen[Todo | None]):
                 title=title,
                 priority=priority,
                 due=due,
+                done=done,
                 description=description,
                 created=date.today().isoformat(),
             ))

@@ -30,6 +30,8 @@ class Todo:
     title: str
     priority: str = "medium"  # high | medium | low
     due: Optional[str] = None  # YYYY-MM-DD or None
+    done: bool = False
+    done_at: Optional[str] = None  # YYYY-MM-DD, set when done=True
     description: str = ""
     created: str = field(default_factory=lambda: date.today().isoformat())
     slug: str = ""

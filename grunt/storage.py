@@ -35,6 +35,8 @@ def _parse_todo(post: frontmatter.Post, slug: str, archived: bool) -> Todo:
         title=post.get("title", slug),
         priority=post.get("priority", "medium"),
         due=post.get("due", None),
+        done=bool(post.get("done", False)),
+        done_at=str(post["done_at"]) if post.get("done_at") else None,
         description=post.content,
         created=str(post.get("created", "")),
         slug=slug,
@@ -106,10 +108,13 @@ def write_item(data_dir: Path, item: Item, is_new: bool = False) -> Path:
             "type": "todo",
             "title": item.title,
             "priority": item.priority,
+            "done": item.done,
             "created": item.created,
         }
         if item.due:
             metadata["due"] = item.due
+        if item.done and item.done_at:
+            metadata["done_at"] = item.done_at
         post = frontmatter.Post(item.description, **metadata)
     else:
         updated = date.today().isoformat()

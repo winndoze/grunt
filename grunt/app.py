@@ -67,11 +67,19 @@ class GruntApp(App):
         color: $text-muted;
         background: $boost;
     }
+    .todo-done {
+        color: $text-muted;
+    }
+    .item-archived {
+        color: $text-muted;
+        text-style: italic;
+    }
     """
 
     BINDINGS = [
         Binding("n", "new_item", "New", priority=True),
         Binding("enter", "edit_item", "Edit", show=False),
+        Binding("x", "toggle_done", "Done", priority=True),
         Binding("a", "archive_item", "Archive", priority=True),
         Binding("A", "toggle_archive", "Toggle archive", priority=True),
         Binding("s", "cycle_sort", "Sort", priority=True),
@@ -117,17 +125,20 @@ class GruntApp(App):
         )
         self.query_one("#todo-list", ItemList).load_items(todos)
         self.query_one("#memo-list", ItemList).load_items(memos)
-
-        archive_hint = "  [A: hide archive]" if self._show_archive else "  [A: show archive]"
-        self.query_one("#todo-sort-label", Label).update(
-            f"sort: {self._todo_sort}{archive_hint}  [s: cycle]"
-        )
-        self.query_one("#memo-sort-label", Label).update(
-            f"sort: {self._memo_sort}{archive_hint}  [s: cycle]"
-        )
-
+        self._update_sort_label()
         status = " [showing archive]" if self._show_archive else ""
         self.title = f"grunt{status}"
+
+    def _update_sort_label(self) -> None:
+        item = self._active_list().selected_item
+        archive_action = "unarchive" if (item and item.archived) else "archive"
+        archive_hint = "  [A: hide archive]" if self._show_archive else "  [A: show archive]"
+        self.query_one("#todo-sort-label", Label).update(
+            f"sort: {self._todo_sort}{archive_hint}  [s: cycle]  [a: {archive_action}]"
+        )
+        self.query_one("#memo-sort-label", Label).update(
+            f"sort: {self._memo_sort}{archive_hint}  [s: cycle]  [a: {archive_action}]"
+        )
 
     def _active_list(self) -> ItemList:
         tabs = self.query_one("#tabs", TabbedContent)
@@ -149,6 +160,9 @@ class GruntApp(App):
     def on_list_view_selected(self, event: ItemList.Selected) -> None:
         self.action_edit_item()
 
+    def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
+        self._update_sort_label()
+
     def action_edit_item(self) -> None:
         item = self._active_list().selected_item
         if item is None:
@@ -157,6 +171,19 @@ class GruntApp(App):
             self.push_screen(EditTodoScreen(item), self._on_todo_saved)
         else:
             self.push_screen(EditMemoScreen(item), self._on_memo_saved)
+
+    def action_toggle_done(self) -> None:
+        from datetime import datetime
+        item = self._active_list().selected_item
+        if not isinstance(item, Todo):
+            return
+        item.done = not item.done
+        item.done_at = datetime.now().isoformat(timespec="seconds") if item.done else None
+        path = write_item(self.data_dir, item)
+        asyncio.ensure_future(
+            git_add_commit(self.data_dir, path, f"Update todo: {item.title}")
+        )
+        self._refresh_lists()
 
     def action_archive_item(self) -> None:
         item = self._active_list().selected_item
