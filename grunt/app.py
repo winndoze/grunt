@@ -11,7 +11,7 @@ from textual.widgets import Footer, Header, Label, ListView, TabbedContent, TabP
 from textual.containers import Horizontal
 
 from .config import get_data_dir, save_config
-from .git_ops import git_add_commit, git_init, git_mv_commit
+from .git_ops import git_add_commit, git_init, git_mv_commit, git_push
 from .models import Item, Memo, Todo
 from .screens.edit_memo import EditMemoScreen
 from .screens.edit_todo import EditTodoScreen
@@ -233,6 +233,11 @@ class GruntApp(App):
     def action_prev_tab(self) -> None:
         """Switch to the previous tab."""
         self.action_next_tab()
+
+    def action_quit(self) -> None:
+        """Kick off a background git push then exit the app."""
+        git_push(self.data_dir)
+        self.exit()
 
     # --- Callbacks ---
 

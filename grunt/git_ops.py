@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import subprocess
 from pathlib import Path
 
 
@@ -28,6 +29,17 @@ async def git_add_commit(data_dir: Path, file_path: Path, message: str) -> None:
     rel = file_path.relative_to(data_dir)
     await _run(["git", "add", str(rel)], data_dir)
     await _run(["git", "commit", "-m", message], data_dir)
+
+
+def git_push(data_dir: Path) -> None:
+    """Fire-and-forget git push in a detached subprocess that outlives the app."""
+    subprocess.Popen(
+        ["git", "push"],
+        cwd=str(data_dir),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
 
 
 async def git_mv_commit(data_dir: Path, src: Path, dst: Path, message: str) -> None:
