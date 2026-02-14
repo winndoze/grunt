@@ -33,7 +33,6 @@ class EditTodoScreen(Screen[Todo | None]):
         margin: 0 0 1 0;
     }
     #edit-box Select {
-        height: 1;
         margin: 0 0 1 0;
     }
     #description-area {
