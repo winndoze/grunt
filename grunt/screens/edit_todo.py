@@ -1,27 +1,22 @@
 from __future__ import annotations
 
 from textual.app import ComposeResult
-from textual.screen import ModalScreen
-from textual.widgets import Button, Input, Label, Select, TextArea, Static
-from textual.containers import Horizontal, Vertical
+from textual.screen import Screen
+from textual.widgets import Button, Footer, Input, Label, Select, TextArea
+from textual.containers import Horizontal, VerticalScroll
 
 from ..models import Todo
 
 
-class EditTodoScreen(ModalScreen[Todo | None]):
-    """Modal screen for creating or editing a TODO."""
+class EditTodoScreen(Screen[Todo | None]):
+    """Full-screen view for creating or editing a TODO."""
 
     CSS = """
     EditTodoScreen {
-        align: center middle;
+        padding: 1 4;
     }
     #edit-box {
-        width: 70;
-        height: auto;
-        max-height: 90vh;
-        border: solid $primary;
-        padding: 2 4;
-        background: $surface;
+        height: 1fr;
     }
     #edit-box Label {
         margin-top: 1;
@@ -32,18 +27,24 @@ class EditTodoScreen(ModalScreen[Todo | None]):
     #edit-box Select {
         margin-bottom: 1;
     }
-    #edit-box TextArea {
-        height: 10;
+    #description-area {
+        height: 1fr;
         margin-bottom: 1;
     }
     #btn-row {
-        margin-top: 1;
         height: auto;
+        margin-top: 1;
+        padding-bottom: 1;
     }
     #btn-row Button {
         margin-right: 1;
     }
     """
+
+    BINDINGS = [
+        ("ctrl+s", "save", "Save"),
+        ("escape", "cancel", "Cancel"),
+    ]
 
     def __init__(self, todo: Todo | None = None) -> None:
         super().__init__()
@@ -52,7 +53,7 @@ class EditTodoScreen(ModalScreen[Todo | None]):
 
     def compose(self) -> ComposeResult:
         todo = self._todo
-        with Vertical(id="edit-box"):
+        with VerticalScroll(id="edit-box"):
             yield Label("New TODO" if self._is_new else f"Edit: {todo.title}")
             yield Label("Title")
             yield Input(
@@ -80,21 +81,22 @@ class EditTodoScreen(ModalScreen[Todo | None]):
                 id="description-area",
             )
             with Horizontal(id="btn-row"):
-                yield Button("Save", variant="primary", id="save-btn")
-                yield Button("Cancel", id="cancel-btn")
+                yield Button("Save  [ctrl+s]", variant="primary", id="save-btn")
+                yield Button("Cancel  [esc]", id="cancel-btn")
                 if not self._is_new:
                     label = "Unarchive" if todo.archived else "Archive"
                     yield Button(label, variant="warning", id="archive-btn")
+        yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "save-btn":
-            self._save()
+            self.action_save()
         elif event.button.id == "cancel-btn":
-            self.dismiss(None)
+            self.action_cancel()
         elif event.button.id == "archive-btn":
             self.dismiss("archive")
 
-    def _save(self) -> None:
+    def action_save(self) -> None:
         title = self.query_one("#title-input", Input).value.strip()
         if not title:
             return
@@ -111,11 +113,13 @@ class EditTodoScreen(ModalScreen[Todo | None]):
             self.dismiss(self._todo)
         else:
             from datetime import date
-            todo = Todo(
+            self.dismiss(Todo(
                 title=title,
                 priority=priority,
                 due=due,
                 description=description,
                 created=date.today().isoformat(),
-            )
-            self.dismiss(todo)
+            ))
+
+    def action_cancel(self) -> None:
+        self.dismiss(None)

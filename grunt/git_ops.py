@@ -28,5 +28,7 @@ async def git_add_commit(data_dir: Path, file_path: Path, message: str) -> None:
 async def git_mv_commit(data_dir: Path, src: Path, dst: Path, message: str) -> None:
     src_rel = src.relative_to(data_dir)
     dst_rel = dst.relative_to(data_dir)
-    await _run(["git", "mv", str(src_rel), str(dst_rel)], data_dir)
+    # File is already moved; stage the removal and addition so git tracks the rename
+    await _run(["git", "rm", "--cached", str(src_rel)], data_dir)
+    await _run(["git", "add", str(dst_rel)], data_dir)
     await _run(["git", "commit", "-m", message], data_dir)

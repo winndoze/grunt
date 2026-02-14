@@ -5,7 +5,7 @@ from pathlib import Path
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.widgets import Footer, Header, Label, TabbedContent, TabPane
+from textual.widgets import Footer, Header, Label, ListView, TabbedContent, TabPane
 from textual.screen import ModalScreen
 from textual.containers import Horizontal
 
@@ -83,10 +83,10 @@ class GruntApp(App):
     """
 
     BINDINGS = [
-        Binding("n", "new_item", "New"),
+        Binding("n", "new_item", "New", priority=True),
         Binding("enter", "edit_item", "Edit", show=False),
-        Binding("a", "archive_item", "Archive"),
-        Binding("shift+a", "toggle_archive", "Toggle archive"),
+        Binding("a", "archive_item", "Archive", priority=True),
+        Binding("A", "toggle_archive", "Toggle archive", priority=True),
         Binding("d", "delete_item", "Delete"),
         Binding("tab", "next_tab", "Next tab", show=False),
         Binding("shift+tab", "prev_tab", "Prev tab", show=False),
@@ -110,6 +110,10 @@ class GruntApp(App):
 
     def on_mount(self) -> None:
         self._refresh_lists()
+        self.set_focus(self.query_one("#todo-list", ItemList))
+
+    def on_tabbed_content_tab_activated(self, event: TabbedContent.TabActivated) -> None:
+        self.set_focus(self._active_list())
 
     def _refresh_lists(self) -> None:
         todos = list_items(self.data_dir, "todo", self._show_archive)
@@ -135,6 +139,9 @@ class GruntApp(App):
             self.push_screen(EditTodoScreen(), self._on_todo_saved)
         else:
             self.push_screen(EditMemoScreen(), self._on_memo_saved)
+
+    def on_list_view_selected(self, event: ItemList.Selected) -> None:
+        self.action_edit_item()
 
     def action_edit_item(self) -> None:
         item = self._active_list().selected_item

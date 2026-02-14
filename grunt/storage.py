@@ -1,13 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Union
-
 import frontmatter
 
-from .models import Memo, Todo, unique_slug
-
-Item = Union[Todo, Memo]
+from .models import Item, Memo, Todo, unique_slug
 
 
 def _todo_path(data_dir: Path, slug: str, archived: bool) -> Path:
@@ -126,11 +122,13 @@ def write_item(data_dir: Path, item: Item, is_new: bool = False) -> Path:
 
 
 def move_item(data_dir: Path, item: Item) -> tuple[Path, Path]:
-    """Move item between active and archive. Returns (src, dst) paths."""
+    """Move item between active and archive, physically moving the file.
+    Returns (src, dst) paths."""
     src = item_path(data_dir, item)
     item.archived = not item.archived
     dst = item_path(data_dir, item)
     dst.parent.mkdir(parents=True, exist_ok=True)
+    src.rename(dst)
     return src, dst
 
 

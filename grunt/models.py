@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 
 def slugify(title: str) -> str:
@@ -59,3 +59,6 @@ class Memo:
     @property
     def item_type(self) -> str:
         return "memo"
+
+
+Item = Union["Todo", "Memo"]
