@@ -3,12 +3,24 @@
 from __future__ import annotations
 
 from textual.app import ComposeResult
+from textual.message import Message
 from textual.screen import Screen
 from textual.widgets import Button, Checkbox, Footer, Input, Label, Select, TextArea
 from textual.containers import Horizontal, VerticalScroll
 
 from ..models import Todo
 from .date_picker import DatePickerScreen
+
+
+class DueDateInput(Input):
+    """An Input that posts a bubbling message when it gains focus, so the screen can open the calendar."""
+
+    class Focused(Message):
+        """Posted when this input gains focus."""
+
+    def on_focus(self) -> None:
+        """Notify the parent screen that this field was focused."""
+        self.post_message(self.Focused())
 
 
 class EditTodoScreen(Screen[Todo | None]):
@@ -102,9 +114,9 @@ class EditTodoScreen(Screen[Todo | None]):
             )
             yield Label("Due date")
             with Horizontal(id="due-row"):
-                yield Input(
+                yield DueDateInput(
                     value=todo.due or "" if todo else "",
-                    placeholder="YYYY-MM-DD (focus to open calendar)",
+                    placeholder="tab here to open calendar",
                     id="due-input",
                 )
             yield Checkbox("Done", value=todo.done if todo else False, id="done-check")
@@ -122,7 +134,7 @@ class EditTodoScreen(Screen[Todo | None]):
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Dispatch button presses to save, cancel, archive, or open the calendar."""
+        """Dispatch button presses to save, cancel, or archive."""
         if event.button.id == "save-btn":
             self.action_save()
         elif event.button.id == "cancel-btn":
@@ -130,20 +142,19 @@ class EditTodoScreen(Screen[Todo | None]):
         elif event.button.id == "archive-btn":
             self.dismiss("archive")
 
-    def on_focus(self, event) -> None:
-        """Open the calendar picker automatically when the due date field gains focus."""
-        if getattr(event.widget, "id", None) == "due-input":
-            if self._calendar_just_closed:
-                self._calendar_just_closed = False
-                return
-            current = self.query_one("#due-input", Input).value.strip()
-            self.app.push_screen(DatePickerScreen(current or None), self._on_date_picked)
+    def on_due_date_input_focused(self, event: DueDateInput.Focused) -> None:
+        """Open the calendar picker when the due date field gains focus."""
+        if self._calendar_just_closed:
+            self._calendar_just_closed = False
+            return
+        current = self.query_one("#due-input", DueDateInput).value.strip()
+        self.app.push_screen(DatePickerScreen(current or None), self._on_date_picked)
 
     def _on_date_picked(self, result: str | None) -> None:
         """Set the due date input to the date returned from the calendar picker."""
         self._calendar_just_closed = True
         if result is not None:
-            self.query_one("#due-input", Input).value = result
+            self.query_one("#due-input", DueDateInput).value = result
 
     def action_save(self) -> None:
         """Validate form fields and dismiss the screen with the updated or new Todo."""
@@ -152,7 +163,7 @@ class EditTodoScreen(Screen[Todo | None]):
             return
         priority_widget = self.query_one("#priority-select", Select)
         priority = str(priority_widget.value) if priority_widget.value else "medium"
-        due = self.query_one("#due-input", Input).value.strip() or None
+        due = self.query_one("#due-input", DueDateInput).value.strip() or None
         done = self.query_one("#done-check", Checkbox).value
         description = self.query_one("#description-area", TextArea).text
 
