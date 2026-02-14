@@ -6,8 +6,7 @@ from pathlib import Path
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.widgets import Footer, Header, Label, ListView, TabbedContent, TabPane
-from textual.screen import ModalScreen
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal
 
 from .config import get_data_dir, save_config
 from .git_ops import git_add_commit, git_init, git_mv_commit
@@ -15,7 +14,7 @@ from .models import Item, Memo, Todo
 from .screens.edit_memo import EditMemoScreen
 from .screens.edit_todo import EditTodoScreen
 from .screens.setup import SetupScreen
-from .storage import delete_item, list_items, move_item, write_item
+from .storage import list_items, move_item, write_item
 from .widgets.item_list import ItemList
 
 
@@ -45,46 +44,6 @@ def _sort_memos(memos: list[Memo], sort_by: str) -> list[Memo]:
     else:  # created
         return sorted(memos, key=lambda m: m.created, reverse=True)
 
-
-class ConfirmScreen(ModalScreen[bool]):
-    """Simple confirmation dialog."""
-
-    CSS = """
-    ConfirmScreen {
-        align: center middle;
-    }
-    #confirm-box {
-        width: 50;
-        height: auto;
-        border: solid $error;
-        padding: 2 4;
-        background: $surface;
-    }
-    #confirm-box Label {
-        margin-bottom: 1;
-    }
-    #btn-row {
-        height: auto;
-    }
-    #btn-row Button {
-        margin-right: 1;
-    }
-    """
-
-    def __init__(self, message: str) -> None:
-        super().__init__()
-        self._message = message
-
-    def compose(self) -> ComposeResult:
-        from textual.widgets import Button
-        with Vertical(id="confirm-box"):
-            yield Label(self._message)
-            with Horizontal(id="btn-row"):
-                yield Button("Yes", variant="error", id="yes-btn")
-                yield Button("No", id="no-btn")
-
-    def on_button_pressed(self, event) -> None:
-        self.dismiss(event.button.id == "yes-btn")
 
 
 class GruntApp(App):
@@ -116,7 +75,6 @@ class GruntApp(App):
         Binding("a", "archive_item", "Archive", priority=True),
         Binding("A", "toggle_archive", "Toggle archive", priority=True),
         Binding("s", "cycle_sort", "Sort", priority=True),
-        Binding("d", "delete_item", "Delete"),
         Binding("tab", "next_tab", "Next tab", show=False),
         Binding("shift+tab", "prev_tab", "Prev tab", show=False),
         Binding("q", "quit", "Quit"),
@@ -219,14 +177,6 @@ class GruntApp(App):
             self._memo_sort = MEMO_SORTS[(idx + 1) % len(MEMO_SORTS)]
         self._refresh_lists()
 
-    def action_delete_item(self) -> None:
-        item = self._active_list().selected_item
-        if item is None:
-            return
-        self.push_screen(
-            ConfirmScreen(f"Delete '{item.title}'?"),
-            lambda confirmed: self._on_delete_confirmed(confirmed, item),
-        )
 
     def action_next_tab(self) -> None:
         tabs = self.query_one("#tabs", TabbedContent)
@@ -290,8 +240,3 @@ class GruntApp(App):
         )
         self._refresh_lists()
 
-    def _on_delete_confirmed(self, confirmed: bool, item: Item) -> None:
-        if not confirmed:
-            return
-        delete_item(self.data_dir, item)
-        self._refresh_lists()
