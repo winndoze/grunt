@@ -7,7 +7,7 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.widgets import Footer, Header, Label, ListView, TabbedContent, TabPane
 from textual.screen import ModalScreen
-from textual.containers import Horizontal
+from textual.containers import Horizontal, Vertical
 
 from .config import get_data_dir, save_config
 from .git_ops import git_add_commit, git_init, git_mv_commit
@@ -17,6 +17,33 @@ from .screens.edit_todo import EditTodoScreen
 from .screens.setup import SetupScreen
 from .storage import delete_item, list_items, move_item, write_item
 from .widgets.item_list import ItemList
+
+
+TODO_SORTS = ["priority", "due date", "created"]
+MEMO_SORTS = ["created", "updated"]
+PRIORITY_ORDER = {"high": 0, "medium": 1, "low": 2}
+
+
+def _sort_todos(todos: list[Todo], sort_by: str) -> list[Todo]:
+    if sort_by == "due date":
+        return sorted(todos, key=lambda t: (
+            t.due or "9999-99-99",
+            PRIORITY_ORDER.get(t.priority, 1),
+        ))
+    elif sort_by == "created":
+        return sorted(todos, key=lambda t: t.created, reverse=True)
+    else:  # priority
+        return sorted(todos, key=lambda t: (
+            PRIORITY_ORDER.get(t.priority, 1),
+            t.due or "9999-99-99",
+        ))
+
+
+def _sort_memos(memos: list[Memo], sort_by: str) -> list[Memo]:
+    if sort_by == "updated":
+        return sorted(memos, key=lambda m: m.updated or m.created, reverse=True)
+    else:  # created
+        return sorted(memos, key=lambda m: m.created, reverse=True)
 
 
 class ConfirmScreen(ModalScreen[bool]):
@@ -50,7 +77,6 @@ class ConfirmScreen(ModalScreen[bool]):
 
     def compose(self) -> ComposeResult:
         from textual.widgets import Button
-        from textual.containers import Vertical
         with Vertical(id="confirm-box"):
             yield Label(self._message)
             with Horizontal(id="btn-row"):
@@ -76,9 +102,11 @@ class GruntApp(App):
     .item-row {
         width: 100%;
     }
-    #archive-indicator {
-        color: $warning;
+    .sort-label {
+        height: 1;
         padding: 0 1;
+        color: $text-muted;
+        background: $boost;
     }
     """
 
@@ -87,6 +115,7 @@ class GruntApp(App):
         Binding("enter", "edit_item", "Edit", show=False),
         Binding("a", "archive_item", "Archive", priority=True),
         Binding("A", "toggle_archive", "Toggle archive", priority=True),
+        Binding("s", "cycle_sort", "Sort", priority=True),
         Binding("d", "delete_item", "Delete"),
         Binding("tab", "next_tab", "Next tab", show=False),
         Binding("shift+tab", "prev_tab", "Prev tab", show=False),
@@ -98,13 +127,17 @@ class GruntApp(App):
         self.data_dir = data_dir
         self.config = config
         self._show_archive = False
+        self._todo_sort = "priority"
+        self._memo_sort = "created"
 
     def compose(self) -> ComposeResult:
         yield Header()
         with TabbedContent(id="tabs"):
             with TabPane("TODOs", id="tab-todos"):
+                yield Label("", id="todo-sort-label", classes="sort-label")
                 yield ItemList(id="todo-list")
             with TabPane("Memos", id="tab-memos"):
+                yield Label("", id="memo-sort-label", classes="sort-label")
                 yield ItemList(id="memo-list")
         yield Footer()
 
@@ -116,10 +149,25 @@ class GruntApp(App):
         self.set_focus(self._active_list())
 
     def _refresh_lists(self) -> None:
-        todos = list_items(self.data_dir, "todo", self._show_archive)
-        memos = list_items(self.data_dir, "memo", self._show_archive)
+        todos = _sort_todos(
+            list_items(self.data_dir, "todo", self._show_archive),
+            self._todo_sort,
+        )
+        memos = _sort_memos(
+            list_items(self.data_dir, "memo", self._show_archive),
+            self._memo_sort,
+        )
         self.query_one("#todo-list", ItemList).load_items(todos)
         self.query_one("#memo-list", ItemList).load_items(memos)
+
+        archive_hint = "  [A: hide archive]" if self._show_archive else "  [A: show archive]"
+        self.query_one("#todo-sort-label", Label).update(
+            f"sort: {self._todo_sort}{archive_hint}  [s: cycle]"
+        )
+        self.query_one("#memo-sort-label", Label).update(
+            f"sort: {self._memo_sort}{archive_hint}  [s: cycle]"
+        )
+
         status = " [showing archive]" if self._show_archive else ""
         self.title = f"grunt{status}"
 
@@ -160,6 +208,15 @@ class GruntApp(App):
 
     def action_toggle_archive(self) -> None:
         self._show_archive = not self._show_archive
+        self._refresh_lists()
+
+    def action_cycle_sort(self) -> None:
+        if self._is_todo_tab():
+            idx = TODO_SORTS.index(self._todo_sort)
+            self._todo_sort = TODO_SORTS[(idx + 1) % len(TODO_SORTS)]
+        else:
+            idx = MEMO_SORTS.index(self._memo_sort)
+            self._memo_sort = MEMO_SORTS[(idx + 1) % len(MEMO_SORTS)]
         self._refresh_lists()
 
     def action_delete_item(self) -> None:
@@ -221,7 +278,6 @@ class GruntApp(App):
         self._refresh_lists()
 
     def _do_archive(self, item: Item) -> None:
-        # Capture verb before move_item flips item.archived
         action_verb = "Unarchive" if item.archived else "Archive"
         src, dst = move_item(self.data_dir, item)
         asyncio.ensure_future(

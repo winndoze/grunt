@@ -49,6 +49,7 @@ class Memo:
     title: str
     body: str = ""
     created: str = field(default_factory=lambda: date.today().isoformat())
+    updated: str = ""
     slug: str = ""
     archived: bool = False
 

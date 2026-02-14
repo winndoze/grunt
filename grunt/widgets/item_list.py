@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from textual.app import ComposeResult
 from textual.widgets import ListItem, ListView, Label
-from textual.reactive import reactive
 
 from ..models import Item, Todo, Memo
 
@@ -17,14 +16,19 @@ class ItemRow(ListItem):
         if isinstance(item, Todo):
             priority_str = item.priority.upper() if item.priority == "high" else item.priority
             due_str = f"  due: {item.due}" if item.due else ""
+            created_str = f"  created: {item.created}" if item.created else ""
             archived_str = " [archived]" if item.archived else ""
             yield Label(
-                f"{item.title:<30} {priority_str:<8}{due_str}{archived_str}",
+                f"{item.title:<30} {priority_str:<8}{due_str}{created_str}{archived_str}",
                 classes="item-row",
             )
         else:
+            date_str = item.updated or item.created
             archived_str = " [archived]" if item.archived else ""
-            yield Label(f"{item.title}{archived_str}", classes="item-row")
+            yield Label(
+                f"{item.title:<40} {date_str}{archived_str}",
+                classes="item-row",
+            )
 
 
 class ItemList(ListView):

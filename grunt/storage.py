@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from pathlib import Path
 import frontmatter
 
@@ -46,6 +47,7 @@ def _parse_memo(post: frontmatter.Post, slug: str, archived: bool) -> Memo:
         title=post.get("title", slug),
         body=post.content,
         created=str(post.get("created", "")),
+        updated=str(post.get("updated", "")),
         slug=slug,
         archived=archived,
     )
@@ -110,10 +112,13 @@ def write_item(data_dir: Path, item: Item, is_new: bool = False) -> Path:
             metadata["due"] = item.due
         post = frontmatter.Post(item.description, **metadata)
     else:
+        updated = date.today().isoformat()
+        item.updated = updated
         metadata = {
             "type": "memo",
             "title": item.title,
             "created": item.created,
+            "updated": updated,
         }
         post = frontmatter.Post(item.body, **metadata)
 
