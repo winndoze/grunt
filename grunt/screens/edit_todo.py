@@ -8,6 +8,7 @@ from textual.widgets import Button, Checkbox, Footer, Input, Label, Select, Text
 from textual.containers import Horizontal, VerticalScroll
 
 from ..models import Todo
+from .date_picker import DatePickerScreen
 
 
 class EditTodoScreen(Screen[Todo | None]):
@@ -38,6 +39,24 @@ class EditTodoScreen(Screen[Todo | None]):
     #description-area {
         height: 1fr;
         margin: 0 0 1 0;
+    }
+    #due-row {
+        height: 1;
+        margin: 0 0 1 0;
+    }
+    #due-row Input {
+        width: 1fr;
+        height: 1;
+        border: none;
+        padding: 0 1;
+        margin: 0;
+    }
+    #due-row Button {
+        width: auto;
+        height: 1;
+        border: none;
+        padding: 0 1;
+        min-width: 5;
     }
     #btn-row {
         height: 1;
@@ -87,12 +106,14 @@ class EditTodoScreen(Screen[Todo | None]):
                 value=current_priority,
                 id="priority-select",
             )
-            yield Label("Due date (YYYY-MM-DD, optional)")
-            yield Input(
-                value=todo.due or "" if todo else "",
-                placeholder="YYYY-MM-DD",
-                id="due-input",
-            )
+            yield Label("Due date")
+            with Horizontal(id="due-row"):
+                yield Input(
+                    value=todo.due or "" if todo else "",
+                    placeholder="YYYY-MM-DD",
+                    id="due-input",
+                )
+                yield Button("cal", id="cal-btn")
             yield Checkbox("Done", value=todo.done if todo else False, id="done-check")
             yield Label("Description")
             yield TextArea(
@@ -108,13 +129,21 @@ class EditTodoScreen(Screen[Todo | None]):
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Dispatch button presses to the appropriate save, cancel, or archive action."""
+        """Dispatch button presses to save, cancel, archive, or open the calendar."""
         if event.button.id == "save-btn":
             self.action_save()
         elif event.button.id == "cancel-btn":
             self.action_cancel()
         elif event.button.id == "archive-btn":
             self.dismiss("archive")
+        elif event.button.id == "cal-btn":
+            current = self.query_one("#due-input", Input).value.strip()
+            self.app.push_screen(DatePickerScreen(current or None), self._on_date_picked)
+
+    def _on_date_picked(self, result: str | None) -> None:
+        """Set the due date input to the date returned from the calendar picker."""
+        if result is not None:
+            self.query_one("#due-input", Input).value = result
 
     def action_save(self) -> None:
         """Validate form fields and dismiss the screen with the updated or new Todo."""
