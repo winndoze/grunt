@@ -130,9 +130,9 @@ class EditTodoScreen(Screen[Todo | None]):
         elif event.button.id == "archive-btn":
             self.dismiss("archive")
 
-    def on_input_focus(self, event: Input.Focus) -> None:
+    def on_focus(self, event) -> None:
         """Open the calendar picker automatically when the due date field gains focus."""
-        if event.input.id == "due-input":
+        if getattr(event.widget, "id", None) == "due-input":
             if self._calendar_just_closed:
                 self._calendar_just_closed = False
                 return
