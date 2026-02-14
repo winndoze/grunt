@@ -47,14 +47,20 @@ class ItemList(ListView):
 
     def load_items(self, items: list[Item], preserve_slug: str | None = None) -> None:
         """Replace the current list contents with the provided items, restoring cursor by slug."""
+        old_index = self.index
         self.clear()
         for item in items:
             self.append(ItemRow(item))
+        if not items:
+            return
         if preserve_slug is not None:
             for i, item in enumerate(items):
                 if item.slug == preserve_slug:
                     self.index = i
-                    break
+                    return
+        # slug not found (item removed from view) — keep same row position
+        if old_index is not None:
+            self.index = min(old_index, len(items) - 1)
 
     @property
     def selected_item(self) -> Item | None:
