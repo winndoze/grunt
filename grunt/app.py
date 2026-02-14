@@ -88,6 +88,8 @@ class GruntApp(App):
         Binding("a", "archive_item", "Archive", priority=True),
         Binding("A", "toggle_archive", "Toggle archive", priority=True),
         Binding("s", "cycle_sort", "Sort", priority=True),
+        Binding("1", "show_todos", "todos", priority=True),
+        Binding("2", "show_memos", "memos", priority=True),
         Binding("tab", "next_tab", "Next tab", show=False),
         Binding("shift+tab", "prev_tab", "Prev tab", show=False),
         Binding("T", "cycle_theme", "Theme", priority=True),
@@ -227,6 +229,14 @@ class GruntApp(App):
             self._memo_sort = MEMO_SORTS[(idx + 1) % len(MEMO_SORTS)]
         self._refresh_lists()
 
+
+    def action_show_todos(self) -> None:
+        """Switch directly to the todos tab."""
+        self.query_one("#tabs", TabbedContent).active = "tab-todos"
+
+    def action_show_memos(self) -> None:
+        """Switch directly to the memos tab."""
+        self.query_one("#tabs", TabbedContent).active = "tab-memos"
 
     def action_next_tab(self) -> None:
         """Switch to the next tab."""
