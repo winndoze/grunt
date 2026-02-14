@@ -73,7 +73,8 @@ class CalendarWidget(Static, can_focus=True):
         d = date(self.year, self.month, self.day) + timedelta(days=delta)
         self.set_reactive(CalendarWidget.year, d.year)
         self.set_reactive(CalendarWidget.month, d.month)
-        self.day = d.day  # final set triggers the single re-render
+        self.set_reactive(CalendarWidget.day, d.day)
+        self.refresh()
 
     def _shift_month(self, delta: int) -> None:
         """Move forward or backward by one month, clamping the day if needed."""
@@ -84,10 +85,10 @@ class CalendarWidget(Static, can_focus=True):
         elif month < 1:
             month, year = 12, year - 1
         max_day = calendar.monthrange(year, month)[1]
-        new_day = min(self.day, max_day)
         self.set_reactive(CalendarWidget.year, year)
         self.set_reactive(CalendarWidget.month, month)
-        self.day = new_day  # final set triggers the single re-render
+        self.set_reactive(CalendarWidget.day, min(self.day, max_day))
+        self.refresh()
 
     @property
     def selected_date(self) -> date:
