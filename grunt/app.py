@@ -108,10 +108,10 @@ class GruntApp(App):
         """Build the top-level widget tree with a tabbed layout for todos and memos."""
         yield Header()
         with TabbedContent(id="tabs"):
-            with TabPane("TODOs", id="tab-todos"):
+            with TabPane("todos", id="tab-todos"):
                 yield Label("", id="todo-sort-label", classes="sort-label")
                 yield ItemList(id="todo-list")
-            with TabPane("Memos", id="tab-memos"):
+            with TabPane("memos", id="tab-memos"):
                 yield Label("", id="memo-sort-label", classes="sort-label")
                 yield ItemList(id="memo-list")
         yield Footer()
