@@ -1,10 +1,28 @@
 # grunt
 
-A terminal-based TODO and Memo manager with git-backed storage.
+A terminal-based TODO and memo manager. Items are stored as plain Markdown files with YAML frontmatter in a git-tracked directory — no database, no cloud, just files you own.
+
+![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
+
+---
+
+## Features
+
+- Two-tab layout: **todos** and **memos**
+- Todos have title, priority (high/medium/low), due date (with calendar picker), done state, and description
+- Memos have title and freeform body
+- Archive items out of the way without deleting them
+- All changes auto-committed to git; git push on quit
+- Sort todos by priority, due date, or created; memos by created or last updated
+- Multiple built-in colour themes
+
+---
 
 ## Install
 
 ```bash
+python -m venv .venv
+source .venv/bin/activate
 pip install -e .
 ```
 
@@ -14,6 +32,8 @@ Or with `uv`:
 uv pip install -e .
 ```
 
+---
+
 ## Usage
 
 ```bash
@@ -22,19 +42,48 @@ grunt
 python -m grunt
 ```
 
-On first run, grunt prompts you to choose a directory to store your notes. That directory is initialized as a git repository and all changes are auto-committed.
+On first run grunt asks you to choose a data directory. That directory is initialised as a git repository and every change is auto-committed.
+
+---
 
 ## Keybindings
+
+### Main list
 
 | Key | Action |
 |-----|--------|
 | `n` | New item |
 | `Enter` | Edit selected item |
-| `a` | Archive selected item |
-| `A` | Toggle archived items visibility |
-| `d` | Delete selected item (with confirmation) |
-| `Tab` / `Shift+Tab` | Switch between TODOs / Memos tabs |
-| `q` | Quit |
+| `x` | Toggle done (todos only) |
+| `a` | Archive / unarchive selected item |
+| `A` | Toggle visibility of archived items |
+| `s` | Cycle sort order |
+| `1` | Switch to todos tab |
+| `2` | Switch to memos tab |
+| `Tab` / `Shift+Tab` | Switch tabs |
+| `T` | Cycle colour theme |
+| `q` | Quit (triggers background git push) |
+
+### Edit screen
+
+| Key | Action |
+|-----|--------|
+| `Ctrl+S` | Save |
+| `Escape` | Cancel |
+| `Enter` (on due date field) | Open calendar picker |
+
+### Calendar picker
+
+| Key | Action |
+|-----|--------|
+| `←` / `→` | Previous / next day |
+| `↑` / `↓` | Previous / next week |
+| `,` | Previous month |
+| `.` | Next month |
+| `Enter` | Select date |
+| `Escape` | Cancel |
+
+---
 
 ## File format
 
@@ -45,10 +94,11 @@ type: todo
 title: Buy groceries
 priority: high
 due: 2026-02-20
+done: false
 created: 2026-02-14
 ---
 
-Description text here...
+Optional description here.
 ```
 
 **Memo** (`<data_dir>/memo/<slug>.md`):
@@ -57,12 +107,31 @@ Description text here...
 type: memo
 title: Project notes
 created: 2026-02-14
+updated: 2026-02-15
 ---
 
-Content here...
+Content here.
 ```
 
-Archived items are moved to `<data_dir>/archive/todo/` or `<data_dir>/archive/memo/`.
+Archived items live under `<data_dir>/archive/todo/` and `<data_dir>/archive/memo/`.
+
+---
+
+## Directory layout
+
+```
+<data_dir>/
+├── .git/
+├── todo/
+│   └── buy-groceries.md
+├── memo/
+│   └── project-notes.md
+└── archive/
+    ├── todo/
+    └── memo/
+```
+
+---
 
 ## Config
 
@@ -70,3 +139,14 @@ Archived items are moved to `<data_dir>/archive/todo/` or `<data_dir>/archive/me
 ```toml
 data_dir = "/home/user/notes"
 ```
+
+---
+
+## Development
+
+```bash
+pip install -e ".[test]"
+pytest
+```
+
+154 tests covering models, storage, git operations, config, sorting, all TUI screens, widgets, and app actions.
