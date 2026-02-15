@@ -261,10 +261,9 @@ class GruntApp(App):
 
     def _on_dir_changed(self, new_dir: str | None) -> None:
         """Switch to the new data directory, saving config and re-initialising git."""
+        self.set_focus(self.query_one("#todo-list", ItemList))
         if not new_dir or new_dir == str(self.data_dir):
             return
-        from pathlib import Path
-        import asyncio
         from .config import save_config
         from .git_ops import git_init
         save_config(new_dir)

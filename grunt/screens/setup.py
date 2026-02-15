@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.screen import Screen
 from textual.widgets import Button, Input, Label, Static
 
@@ -30,6 +31,8 @@ class SetupScreen(Screen):
         margin-top: 1;
     }
     """
+
+    BINDINGS = [Binding("escape", "cancel", "Cancel", show=False)]
 
     def __init__(self, current: str | None = None) -> None:
         super().__init__()
@@ -63,6 +66,11 @@ class SetupScreen(Screen):
     def on_input_submitted(self, event: Input.Submitted) -> None:
         """Trigger form submission when the user presses Enter in the input field."""
         self._submit()
+
+    def action_cancel(self) -> None:
+        """Dismiss without making any change (only applicable in change-dir mode)."""
+        if self._current is not None:
+            self.dismiss(None)
 
     def _submit(self) -> None:
         """Validate and dismiss the screen with the entered directory path."""
