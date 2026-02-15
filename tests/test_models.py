@@ -38,6 +38,23 @@ def test_slugify_underscores_become_hyphens():
     assert slugify("foo_bar") == "foo-bar"
 
 
+def test_slugify_long_title_truncated():
+    long = "a" * 60
+    assert len(slugify(long)) <= 50
+
+
+def test_slugify_truncate_no_trailing_hyphen():
+    # Place a word boundary exactly at the cut point to ensure no trailing dash
+    title = "a" * 49 + " extra words here"
+    result = slugify(title)
+    assert not result.endswith("-")
+    assert len(result) <= 50
+
+
+def test_slugify_custom_max_len():
+    assert len(slugify("hello world foo bar baz", max_len=10)) <= 10
+
+
 # --- unique_slug ---
 
 def test_unique_slug_no_collision():

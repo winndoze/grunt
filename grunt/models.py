@@ -9,12 +9,17 @@ from pathlib import Path
 from typing import Optional, Union
 
 
-def slugify(title: str) -> str:
-    """Convert a title string into a URL-friendly slug."""
+_MAX_SLUG_LEN = 50
+
+
+def slugify(title: str, max_len: int = _MAX_SLUG_LEN) -> str:
+    """Convert a title string into a URL-friendly slug, capped at max_len chars."""
     slug = title.lower()
     slug = re.sub(r"[^\w\s-]", "", slug)
     slug = re.sub(r"[\s_]+", "-", slug)
     slug = slug.strip("-")
+    if len(slug) > max_len:
+        slug = slug[:max_len].rstrip("-")
     return slug or "untitled"
 
 
