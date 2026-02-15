@@ -44,6 +44,21 @@ python -m grunt
 
 On first run grunt asks you to choose a data directory. That directory is initialised as a git repository and every change is auto-committed.
 
+### Quick-add from the command line
+
+Add a todo without opening the TUI:
+
+```bash
+grunt "Buy oat milk"
+grunt "Fix login bug" --priority high
+grunt "Submit report" -p high -d 2026-03-01
+```
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--priority` | `-p` | `high`, `medium` (default), or `low` |
+| `--due` | `-d` | Due date in `YYYY-MM-DD` format |
+
 ---
 
 ## Keybindings
