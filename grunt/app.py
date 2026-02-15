@@ -93,6 +93,7 @@ class GruntApp(App):
         Binding("tab", "next_tab", "Next tab", show=False),
         Binding("shift+tab", "prev_tab", "Prev tab", show=False),
         Binding("T", "cycle_theme", "Theme", priority=True),
+        Binding("C", "change_dir", "Change dir", priority=True),
         Binding("q", "quit", "Quit"),
     ]
 
@@ -120,6 +121,7 @@ class GruntApp(App):
 
     def on_mount(self) -> None:
         """Populate item lists and focus the todo list on startup."""
+        self.sub_title = str(self.data_dir)
         self._refresh_lists()
         self.set_focus(self.query_one("#todo-list", ItemList))
 
@@ -252,6 +254,27 @@ class GruntApp(App):
         """Cycle to the next available Textual theme."""
         self._theme_index = (self._theme_index + 1) % len(THEMES)
         self.theme = THEMES[self._theme_index]
+
+    def action_change_dir(self) -> None:
+        """Open the setup screen to switch to a different data directory."""
+        self.push_screen(SetupScreen(current=str(self.data_dir)), self._on_dir_changed)
+
+    def _on_dir_changed(self, new_dir: str | None) -> None:
+        """Switch to the new data directory, saving config and re-initialising git."""
+        if not new_dir or new_dir == str(self.data_dir):
+            return
+        from pathlib import Path
+        import asyncio
+        from .config import save_config
+        from .git_ops import git_init
+        save_config(new_dir)
+        self.data_dir = Path(new_dir).expanduser()
+        self.data_dir.mkdir(parents=True, exist_ok=True)
+        for sub in ["todo", "memo", "archive/todo", "archive/memo"]:
+            (self.data_dir / sub).mkdir(parents=True, exist_ok=True)
+        asyncio.ensure_future(git_init(self.data_dir))
+        self.sub_title = str(self.data_dir)
+        self._refresh_lists()
 
     def action_quit(self) -> None:
         """Kick off a background git push then exit the app."""

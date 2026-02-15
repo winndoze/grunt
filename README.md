@@ -77,6 +77,7 @@ grunt "Submit report" -p high -d 2026-03-01
 | `2` | Switch to memos tab |
 | `Tab` / `Shift+Tab` | Switch tabs |
 | `T` | Cycle colour theme |
+| `C` | Change data directory |
 | `q` | Quit (triggers background git push) |
 
 ### Edit screen
@@ -153,6 +154,25 @@ Archived items live under `<data_dir>/archive/todo/` and `<data_dir>/archive/mem
 `~/.config/grunt/config.toml`:
 ```toml
 data_dir = "/home/user/notes"
+```
+
+---
+
+## Changing the data directory
+
+The current data directory is always shown in the app header (below the title).
+
+To switch to a different directory while grunt is running, press **`C`**. A prompt will appear pre-filled with the current path — clear it and enter a new one, then press Enter or click "Change directory". grunt will:
+
+1. Save the new path to `~/.config/grunt/config.toml`
+2. Create the directory and required subdirectories if they don't exist
+3. Initialise a git repository there if one doesn't already exist
+4. Reload the item lists from the new location
+
+To change the directory manually (without opening grunt), edit `~/.config/grunt/config.toml` directly:
+
+```toml
+data_dir = "/path/to/your/new/notes"
 ```
 
 ---

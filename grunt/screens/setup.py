@@ -31,16 +31,29 @@ class SetupScreen(Screen):
     }
     """
 
+    def __init__(self, current: str | None = None) -> None:
+        super().__init__()
+        self._current = current
+
     def compose(self) -> ComposeResult:
         """Build the setup form with a directory input field and submit button."""
+        is_change = self._current is not None
+        heading = "Change data directory" if is_change else "Welcome to grunt!"
+        hint = (
+            f"Current: {self._current}\nEnter a new path to switch directories:"
+            if is_change
+            else "Where should grunt store your notes?"
+        )
         with Static(id="setup-box"):
-            yield Label("Welcome to grunt!", id="welcome")
-            yield Label("Where should grunt store your notes?")
+            yield Label(heading, id="welcome")
+            yield Label(hint)
             yield Input(
+                value=self._current or "",
                 placeholder="e.g. /home/user/notes",
                 id="data-dir-input",
             )
-            yield Button("Set up", variant="primary", id="setup-btn")
+            btn_label = "Change directory" if is_change else "Set up"
+            yield Button(btn_label, variant="primary", id="setup-btn")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Trigger form submission when the setup button is pressed."""
