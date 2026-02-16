@@ -79,6 +79,13 @@ class GruntApp(App):
         color: $text-muted;
         text-style: italic;
     }
+    .list-header {
+        height: 1;
+        padding: 0 1;
+        color: $text;
+        text-style: bold;
+        background: $boost;
+    }
     """
 
     BINDINGS = [
@@ -113,9 +120,17 @@ class GruntApp(App):
         with TabbedContent(id="tabs"):
             with TabPane("todos", id="tab-todos"):
                 yield Label("", id="todo-sort-label", classes="sort-label")
+                yield Label(
+                    f"       {'Title':<35} {'Priority':<8} {'Due':<16} {'Created':<16}",
+                    classes="list-header",
+                )
                 yield ItemList(id="todo-list")
             with TabPane("memos", id="tab-memos"):
                 yield Label("", id="memo-sort-label", classes="sort-label")
+                yield Label(
+                    f"     {'Title':<40} {'Date':<16}",
+                    classes="list-header",
+                )
                 yield ItemList(id="memo-list")
         yield Footer()
 

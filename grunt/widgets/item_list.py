@@ -21,15 +21,15 @@ class ItemRow(ListItem):
             arc_str  = "▸arc  " if item.archived else "      "
             done_str = "✓ " if item.done else "  "
             priority_str = item.priority.upper() if item.priority == "high" else item.priority
-            due_str = f"  due: {item.due}" if item.due else ""
-            created_str = f"  created: {item.created}" if item.created else ""
+            due_str = item.due or ""
+            created_str = item.created or ""
             classes = "item-row"
             if item.archived:
                 classes += " item-archived"
             elif item.done:
                 classes += " todo-done"
             yield Label(
-                f"{arc_str}{done_str}{item.title:<30} {priority_str:<8}{due_str}{created_str}",
+                f"{arc_str}{done_str}{item.title:<35} {priority_str:<8} {due_str:<16} {created_str:<16}",
                 classes=classes,
             )
         else:
