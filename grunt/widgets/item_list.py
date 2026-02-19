@@ -28,16 +28,18 @@ class ItemRow(ListItem):
                 classes += " item-archived"
             elif item.done:
                 classes += " todo-done"
+            title = item.title if len(item.title) <= 35 else item.title[:34] + "…"
             yield Label(
-                f"{arc_str}{done_str}{item.title:<35} {priority_str:<8} {due_str:<16} {created_str:<16}",
+                f"{arc_str}{done_str}{title:<35} {priority_str:<8} {due_str:<16} {created_str:<16}",
                 classes=classes,
             )
         else:
             arc_str = "▸arc  " if item.archived else "      "
             date_str = item.updated or item.created
             classes = "item-row item-archived" if item.archived else "item-row"
+            title = item.title if len(item.title) <= 40 else item.title[:39] + "…"
             yield Label(
-                f"{arc_str}{item.title:<40} {date_str}",
+                f"{arc_str}{title:<40} {date_str}",
                 classes=classes,
             )
 
