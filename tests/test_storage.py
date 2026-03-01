@@ -7,6 +7,7 @@ from pathlib import Path
 from grunt.models import Memo, Todo
 from grunt.storage import (
     _ensure_dirs,
+    _parse_tags,
     item_path,
     list_items,
     move_item,
@@ -221,3 +222,60 @@ def test_move_item_returns_correct_paths(data_dir):
     src, dst = move_item(data_dir, todo)
     assert src == data_dir / "todo" / "task.md"
     assert dst == data_dir / "archive" / "todo" / "task.md"
+
+
+# --- _parse_tags ---
+
+def test_parse_tags_from_list():
+    assert _parse_tags(["work", "urgent"]) == ["work", "urgent"]
+
+
+def test_parse_tags_from_comma_string():
+    assert _parse_tags("work, urgent") == ["work", "urgent"]
+
+
+def test_parse_tags_strips_whitespace():
+    assert _parse_tags("  work  ,  urgent  ") == ["work", "urgent"]
+
+
+def test_parse_tags_empty_list():
+    assert _parse_tags([]) == []
+
+
+def test_parse_tags_empty_string():
+    assert _parse_tags("") == []
+
+
+def test_parse_tags_none():
+    assert _parse_tags(None) == []
+
+
+# --- tags roundtrip: Todo ---
+
+def test_write_and_read_todo_with_tags(data_dir):
+    todo = Todo(title="Tagged task", tags=["work", "urgent"])
+    write_item(data_dir, todo, is_new=True)
+    items = list_items(data_dir, "todo")
+    assert items[0].tags == ["work", "urgent"]
+
+
+def test_write_todo_no_tags_key_absent(data_dir):
+    """A todo with no tags should not write a 'tags' key to frontmatter."""
+    todo = Todo(title="Plain task")
+    path = write_item(data_dir, todo, is_new=True)
+    assert "tags" not in path.read_text()
+
+
+# --- tags roundtrip: Memo ---
+
+def test_write_and_read_memo_with_tags(data_dir):
+    memo = Memo(title="Tagged note", tags=["reference", "project-x"])
+    write_item(data_dir, memo, is_new=True)
+    items = list_items(data_dir, "memo")
+    assert items[0].tags == ["reference", "project-x"]
+
+
+def test_write_memo_no_tags_key_absent(data_dir):
+    memo = Memo(title="Plain note")
+    path = write_item(data_dir, memo, is_new=True)
+    assert "tags" not in path.read_text()

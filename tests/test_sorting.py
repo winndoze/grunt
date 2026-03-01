@@ -85,6 +85,32 @@ def test_sort_todos_empty_list():
     assert _sort_todos([], "priority") == []
 
 
+def test_sort_todos_by_tags_alphabetical():
+    t1 = Todo(title="A", tags=["zebra"])
+    t2 = Todo(title="B", tags=["apple"])
+    t3 = Todo(title="C", tags=["mango"])
+    result = _sort_todos([t1, t2, t3], "tags")
+    assert result[0].title == "B"
+    assert result[1].title == "C"
+    assert result[2].title == "A"
+
+
+def test_sort_todos_by_tags_untagged_last():
+    t1 = Todo(title="A", tags=[])
+    t2 = Todo(title="B", tags=["alpha"])
+    result = _sort_todos([t1, t2], "tags")
+    assert result[0].title == "B"
+    assert result[1].title == "A"
+
+
+def test_sort_todos_by_tags_uses_first_sorted_tag():
+    """When an item has multiple tags, sort key is the alphabetically first tag."""
+    t1 = Todo(title="A", tags=["zebra", "apple"])
+    t2 = Todo(title="B", tags=["mango"])
+    result = _sort_todos([t1, t2], "tags")
+    assert result[0].title == "A"  # "apple" < "mango"
+
+
 # --- _sort_memos ---
 
 def test_sort_memos_created_newest_first(memos):
@@ -116,3 +142,21 @@ def test_sort_memos_preserves_all_items(memos):
 
 def test_sort_memos_empty_list():
     assert _sort_memos([], "created") == []
+
+
+def test_sort_memos_by_tags_alphabetical():
+    m1 = Memo(title="A", tags=["zebra"])
+    m2 = Memo(title="B", tags=["apple"])
+    m3 = Memo(title="C", tags=["mango"])
+    result = _sort_memos([m1, m2, m3], "tags")
+    assert result[0].title == "B"
+    assert result[1].title == "C"
+    assert result[2].title == "A"
+
+
+def test_sort_memos_by_tags_untagged_last():
+    m1 = Memo(title="A", tags=[])
+    m2 = Memo(title="B", tags=["alpha"])
+    result = _sort_memos([m1, m2], "tags")
+    assert result[0].title == "B"
+    assert result[1].title == "A"

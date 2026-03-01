@@ -23,6 +23,8 @@ class ItemRow(ListItem):
             priority_str = item.priority.upper() if item.priority == "high" else item.priority
             due_str = item.due or ""
             created_str = item.created or ""
+            tags_str = ", ".join(item.tags)
+            tags_str = tags_str if len(tags_str) <= 20 else tags_str[:19] + "…"
             classes = "item-row"
             if item.archived:
                 classes += " item-archived"
@@ -30,16 +32,18 @@ class ItemRow(ListItem):
                 classes += " todo-done"
             title = item.title if len(item.title) <= 35 else item.title[:34] + "…"
             yield Label(
-                f"{arc_str}{done_str}{title:<35} {priority_str:<8} {due_str:<16} {created_str:<16}",
+                f"{arc_str}{done_str}{title:<35} {priority_str:<8} {due_str:<16} {created_str:<16} {tags_str:<20}",
                 classes=classes,
             )
         else:
             arc_str = "▸arc  " if item.archived else "      "
             date_str = item.updated or item.created
+            tags_str = ", ".join(item.tags)
+            tags_str = tags_str if len(tags_str) <= 20 else tags_str[:19] + "…"
             classes = "item-row item-archived" if item.archived else "item-row"
             title = item.title if len(item.title) <= 40 else item.title[:39] + "…"
             yield Label(
-                f"{arc_str}{title:<40} {date_str}",
+                f"{arc_str}{title:<40} {date_str:<16} {tags_str:<20}",
                 classes=classes,
             )
 

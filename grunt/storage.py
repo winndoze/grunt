@@ -36,6 +36,15 @@ def _ensure_dirs(data_dir: Path) -> None:
         (data_dir / d).mkdir(parents=True, exist_ok=True)
 
 
+def _parse_tags(raw) -> list[str]:
+    """Normalise a tags value from frontmatter into a list of stripped strings."""
+    if isinstance(raw, list):
+        return [str(t).strip() for t in raw if str(t).strip()]
+    if isinstance(raw, str) and raw.strip():
+        return [t.strip() for t in raw.split(",") if t.strip()]
+    return []
+
+
 def _parse_todo(post: frontmatter.Post, slug: str, archived: bool) -> Todo:
     """Construct a Todo dataclass from a parsed frontmatter Post object."""
     return Todo(
@@ -48,6 +57,7 @@ def _parse_todo(post: frontmatter.Post, slug: str, archived: bool) -> Todo:
         created=str(post.get("created", "")),
         slug=slug,
         archived=archived,
+        tags=_parse_tags(post.get("tags", [])),
     )
 
 
@@ -60,6 +70,7 @@ def _parse_memo(post: frontmatter.Post, slug: str, archived: bool) -> Memo:
         updated=str(post.get("updated", "")),
         slug=slug,
         archived=archived,
+        tags=_parse_tags(post.get("tags", [])),
     )
 
 
@@ -127,6 +138,8 @@ def write_item(data_dir: Path, item: Item, is_new: bool = False) -> Path:
             metadata["due"] = item.due
         if item.done and item.done_at:
             metadata["done_at"] = item.done_at
+        if item.tags:
+            metadata["tags"] = item.tags
         post = frontmatter.Post(item.description, **metadata)
     else:
         updated = date.today().isoformat()
@@ -137,6 +150,8 @@ def write_item(data_dir: Path, item: Item, is_new: bool = False) -> Path:
             "created": item.created,
             "updated": updated,
         }
+        if item.tags:
+            metadata["tags"] = item.tags
         post = frontmatter.Post(item.body, **metadata)
 
     path.write_text(frontmatter.dumps(post))

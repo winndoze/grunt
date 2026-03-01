@@ -20,8 +20,8 @@ from .storage import list_items, move_item, write_item
 from .widgets.item_list import ItemList
 
 
-TODO_SORTS = ["priority", "due date", "created"]
-MEMO_SORTS = ["created", "updated"]
+TODO_SORTS = ["priority", "due date", "created", "tags"]
+MEMO_SORTS = ["created", "updated", "tags"]
 PRIORITY_ORDER = {"high": 0, "medium": 1, "low": 2}
 THEMES = ["textual-dark", "textual-light", "nord", "gruvbox", "catppuccin-mocha", "dracula", "tokyo-night", "solarized-light"]
 
@@ -35,6 +35,11 @@ def _sort_todos(todos: list[Todo], sort_by: str) -> list[Todo]:
         ))
     elif sort_by == "created":
         return sorted(todos, key=lambda t: t.created, reverse=True)
+    elif sort_by == "tags":
+        return sorted(todos, key=lambda t: (
+            sorted(t.tags)[0] if t.tags else "\xff",
+            PRIORITY_ORDER.get(t.priority, 1),
+        ))
     else:  # priority
         return sorted(todos, key=lambda t: (
             PRIORITY_ORDER.get(t.priority, 1),
@@ -46,6 +51,11 @@ def _sort_memos(memos: list[Memo], sort_by: str) -> list[Memo]:
     """Return memos sorted by the given field name."""
     if sort_by == "updated":
         return sorted(memos, key=lambda m: m.updated or m.created, reverse=True)
+    elif sort_by == "tags":
+        return sorted(memos, key=lambda m: (
+            sorted(m.tags)[0] if m.tags else "\xff",
+            m.updated or m.created,
+        ))
     else:  # created
         return sorted(memos, key=lambda m: m.created, reverse=True)
 
@@ -121,14 +131,14 @@ class GruntApp(App):
             with TabPane("todos", id="tab-todos"):
                 yield Label("", id="todo-sort-label", classes="sort-label")
                 yield Label(
-                    f"       {'Title':<35} {'Priority':<8} {'Due':<16} {'Created':<16}",
+                    f"       {'Title':<35} {'Priority':<8} {'Due':<16} {'Created':<16} {'Tags':<20}",
                     classes="list-header",
                 )
                 yield ItemList(id="todo-list")
             with TabPane("memos", id="tab-memos"):
                 yield Label("", id="memo-sort-label", classes="sort-label")
                 yield Label(
-                    f"     {'Title':<40} {'Date':<16}",
+                    f"     {'Title':<40} {'Date':<16} {'Tags':<20}",
                     classes="list-header",
                 )
                 yield ItemList(id="memo-list")

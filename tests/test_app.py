@@ -277,6 +277,9 @@ async def test_s_cycles_todo_sort(populated_dir):
         assert pilot.app._todo_sort == "created"
         await pilot.press("s")
         await pilot.pause(0.1)
+        assert pilot.app._todo_sort == "tags"
+        await pilot.press("s")
+        await pilot.pause(0.1)
         assert pilot.app._todo_sort == "priority"
 
 
@@ -289,6 +292,9 @@ async def test_s_cycles_memo_sort(populated_dir):
         await pilot.press("s")
         await pilot.pause(0.1)
         assert pilot.app._memo_sort == "updated"
+        await pilot.press("s")
+        await pilot.pause(0.1)
+        assert pilot.app._memo_sort == "tags"
         await pilot.press("s")
         await pilot.pause(0.1)
         assert pilot.app._memo_sort == "created"

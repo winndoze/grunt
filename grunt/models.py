@@ -45,6 +45,7 @@ class Todo:
     created: str = field(default_factory=lambda: date.today().isoformat())
     slug: str = ""
     archived: bool = False
+    tags: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         """Auto-generate the slug from the title if one was not provided."""
@@ -65,6 +66,7 @@ class Memo:
     updated: str = ""
     slug: str = ""
     archived: bool = False
+    tags: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         """Auto-generate the slug from the title if one was not provided."""

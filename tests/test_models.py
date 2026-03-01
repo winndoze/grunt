@@ -120,6 +120,15 @@ def test_todo_stores_explicit_values():
     assert t.done_at == "2026-02-14T10:00:00"
 
 
+def test_todo_default_tags():
+    assert Todo(title="Task").tags == []
+
+
+def test_todo_stores_tags():
+    t = Todo(title="Task", tags=["work", "urgent"])
+    assert t.tags == ["work", "urgent"]
+
+
 # --- Memo ---
 
 def test_memo_default_body():
@@ -145,3 +154,12 @@ def test_memo_item_type():
 def test_memo_created_set_today():
     from datetime import date
     assert Memo(title="Notes").created == date.today().isoformat()
+
+
+def test_memo_default_tags():
+    assert Memo(title="Notes").tags == []
+
+
+def test_memo_stores_tags():
+    m = Memo(title="Notes", tags=["reference", "project-x"])
+    assert m.tags == ["reference", "project-x"]

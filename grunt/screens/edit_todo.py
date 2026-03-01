@@ -106,6 +106,12 @@ class EditTodoScreen(Screen[Todo | None]):
                     id="due-input",
                 )
             yield Checkbox("Done", value=todo.done if todo else False, id="done-check")
+            yield Label("Tags (comma-separated)")
+            yield Input(
+                value=", ".join(todo.tags) if todo else "",
+                placeholder="e.g. work, urgent, project-x",
+                id="tags-input",
+            )
             yield Label("Description")
             yield TextArea(
                 text=todo.description if todo else "",
@@ -149,6 +155,8 @@ class EditTodoScreen(Screen[Todo | None]):
         priority = str(priority_widget.value) if priority_widget.value else "medium"
         due = self.query_one("#due-input", Input).value.strip() or None
         done = self.query_one("#done-check", Checkbox).value
+        tags_raw = self.query_one("#tags-input", Input).value
+        tags = [t.strip() for t in tags_raw.split(",") if t.strip()]
         description = self.query_one("#description-area", TextArea).text
 
         if self._todo:
@@ -156,6 +164,7 @@ class EditTodoScreen(Screen[Todo | None]):
             self._todo.priority = priority
             self._todo.due = due
             self._todo.done = done
+            self._todo.tags = tags
             self._todo.description = description
             self.dismiss(self._todo)
         else:
@@ -165,6 +174,7 @@ class EditTodoScreen(Screen[Todo | None]):
                 priority=priority,
                 due=due,
                 done=done,
+                tags=tags,
                 description=description,
                 created=date.today().isoformat(),
             ))

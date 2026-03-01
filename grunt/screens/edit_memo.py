@@ -75,6 +75,12 @@ class EditMemoScreen(Screen[Memo | None]):
                 placeholder="Title",
                 id="title-input",
             )
+            yield Label("Tags (comma-separated)")
+            yield Input(
+                value=", ".join(memo.tags) if memo else "",
+                placeholder="e.g. work, reference, project-x",
+                id="tags-input",
+            )
             yield Label("Body")
             yield TextArea(
                 text=memo.body if memo else "",
@@ -102,16 +108,20 @@ class EditMemoScreen(Screen[Memo | None]):
         title = self.query_one("#title-input", Input).value.strip()
         if not title:
             return
+        tags_raw = self.query_one("#tags-input", Input).value
+        tags = [t.strip() for t in tags_raw.split(",") if t.strip()]
         body = self.query_one("#body-area", TextArea).text
 
         if self._memo:
             self._memo.title = title
+            self._memo.tags = tags
             self._memo.body = body
             self.dismiss(self._memo)
         else:
             from datetime import date
             self.dismiss(Memo(
                 title=title,
+                tags=tags,
                 body=body,
                 created=date.today().isoformat(),
             ))
