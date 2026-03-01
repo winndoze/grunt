@@ -20,8 +20,8 @@ from .storage import list_items, move_item, write_item
 from .widgets.item_list import ItemList
 
 
-TODO_SORTS = ["priority", "due date", "created", "tags"]
-MEMO_SORTS = ["created", "updated", "tags"]
+TODO_SORTS = ["priority", "due date", "created", "tags → priority", "tags → due date", "tags → created"]
+MEMO_SORTS = ["created", "updated", "tags → created", "tags → updated"]
 PRIORITY_ORDER = {"high": 0, "medium": 1, "low": 2}
 THEMES = ["textual-dark", "textual-light", "nord", "gruvbox", "catppuccin-mocha", "dracula", "tokyo-night", "solarized-light"]
 
@@ -35,10 +35,22 @@ def _sort_todos(todos: list[Todo], sort_by: str) -> list[Todo]:
         ))
     elif sort_by == "created":
         return sorted(todos, key=lambda t: t.created, reverse=True)
-    elif sort_by == "tags":
+    elif sort_by == "tags → priority":
         return sorted(todos, key=lambda t: (
             sorted(t.tags)[0] if t.tags else "\xff",
             PRIORITY_ORDER.get(t.priority, 1),
+            t.due or "9999-99-99",
+        ))
+    elif sort_by == "tags → due date":
+        return sorted(todos, key=lambda t: (
+            sorted(t.tags)[0] if t.tags else "\xff",
+            t.due or "9999-99-99",
+            PRIORITY_ORDER.get(t.priority, 1),
+        ))
+    elif sort_by == "tags → created":
+        return sorted(todos, key=lambda t: (
+            sorted(t.tags)[0] if t.tags else "\xff",
+            t.created,
         ))
     else:  # priority
         return sorted(todos, key=lambda t: (
@@ -51,7 +63,12 @@ def _sort_memos(memos: list[Memo], sort_by: str) -> list[Memo]:
     """Return memos sorted by the given field name."""
     if sort_by == "updated":
         return sorted(memos, key=lambda m: m.updated or m.created, reverse=True)
-    elif sort_by == "tags":
+    elif sort_by == "tags → created":
+        return sorted(memos, key=lambda m: (
+            sorted(m.tags)[0] if m.tags else "\xff",
+            m.created,
+        ))
+    elif sort_by == "tags → updated":
         return sorted(memos, key=lambda m: (
             sorted(m.tags)[0] if m.tags else "\xff",
             m.updated or m.created,
